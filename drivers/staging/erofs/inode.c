@@ -23,6 +23,26 @@ static int read_inode(struct inode *inode, void *data)
 
 	vi->data_mapping_mode = __inode_data_mapping(advise);
 
+	debugln("%s, reading inode nid %llu at %u of blkaddr %u",
+		__func__, vi->nid, *ofs, blkaddr);
+
+	page = erofs_get_meta_page(sb, blkaddr, false);
+	if (IS_ERR(page)) {
+		errln("failed to get inode (nid: %llu) page, err %ld",
+		      vi->nid, PTR_ERR(page));
+		return page;
+	}
+
+	v1 = page_address(page) + *ofs;
+	ifmt = le16_to_cpu(v1->i_advise);
+
+	if (ifmt & ~EROFS_I_ALL) {
+		errln("unsupported i_format %u of nid %llu", ifmt, vi->nid);
+		err = -EOPNOTSUPP;
+		goto err_out;
+	}
+
+	vi->data_mapping_mode = __inode_data_mapping(ifmt);
 	if (unlikely(vi->data_mapping_mode >= EROFS_INODE_LAYOUT_MAX)) {
 		errln("unknown data mapping mode %u of nid %llu",
 			vi->data_mapping_mode, vi->nid);
