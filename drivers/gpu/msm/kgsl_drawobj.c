@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 /*
@@ -115,7 +116,6 @@ void kgsl_dump_syncpoints(struct kgsl_device *device,
 			int j;
 			struct event_fence_info *info = event ?
 					event->priv : NULL;
-
 			for (j = 0; info && j < info->num_fences; j++)
 				dev_err(device->dev, "[%d]  fence: %s\n",
 					i, info->fences[j].name);

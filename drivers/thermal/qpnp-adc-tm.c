@@ -12,6 +12,9 @@
  * GNU General Public License for more details.
  *
  */
+/*
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ */
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 

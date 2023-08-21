@@ -1363,6 +1363,7 @@ max3421_urb_done(struct usb_hcd *hcd)
 		/* no locking: HCD (i.e., we) own toggles, don't we? */
 		usb_settoggle(urb->dev, epnum, 0, rcvtog);
 		usb_settoggle(urb->dev, epnum, 1, sndtog);
+
 		max3421_hcd->curr_urb = NULL;
 		spin_lock_irqsave(&max3421_hcd->lock, flags);
 		usb_hcd_unlink_urb_from_ep(hcd, urb);
