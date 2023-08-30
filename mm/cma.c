@@ -32,7 +32,6 @@
 #include <linux/io.h>
 #include <linux/kmemleak.h>
 #include <linux/delay.h>
-#include <linux/show_mem_notifier.h>
 #include <trace/events/cma.h>
 
 #include "cma.h"
@@ -186,7 +185,6 @@ static int __init cma_init_reserved_areas(void)
 			return ret;
 	}
 
-	show_mem_notifier_register(&cma_nb);
 
 	return 0;
 }
