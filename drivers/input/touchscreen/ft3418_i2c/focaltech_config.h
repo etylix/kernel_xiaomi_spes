@@ -1,9 +1,9 @@
 /*
-source "drivers/input/touchscreen/synaptics_tcm/Kconfig"
  *
  * FocalTech TouchScreen driver.
  *
  * Copyright (c) 2012-2020, FocalTech Systems, Ltd., all rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -210,27 +210,6 @@ source "drivers/input/touchscreen/synaptics_tcm/Kconfig"
  */
 #define FTS_POWER_SOURCE_CUST_EN                1
 
-/*
- * enable/disable touchpad
- */
-#define LCT_TP_WORK_EN                          1
-
-/*
-* enable/disable 'grip area' feature
-*/
-#define LCT_TP_GRIP_AREA_EN                     1
-
-
-/*
- * enable tp usb plugin feature
- */
-#define LCT_TP_USB_PLUGIN                       1
-
-/*
- * enable/disable palm feature
- */
-#define LCT_TP_PALM_EN                             1
-
 /****************************************************/
 
 /********************** Upgrade ****************************/
@@ -277,19 +256,19 @@ source "drivers/input/touchscreen/synaptics_tcm/Kconfig"
  * define your own fw_file, the sample one to be replaced is invalid
  * NOTE: if FTS_GET_MODULE_NUM > 1, it's the fw corresponding with FTS_VENDOR_ID
  */
-#define FTS_UPGRADE_FW_FILE                      "include/firmware/fw_sample.h"
+#define FTS_UPGRADE_FW_FILE                      "include/firmware/fw_sample.i"
 
 /*
  * if FTS_GET_MODULE_NUM >= 2, fw corrsponding with FTS_VENDOR_ID2
  * define your own fw_file, the sample one is invalid
  */
-#define FTS_UPGRADE_FW2_FILE                     "include/firmware/fw_sample.h"
+#define FTS_UPGRADE_FW2_FILE                     "include/firmware/fw_sample.i"
 
 /*
  * if FTS_GET_MODULE_NUM >= 3, fw corrsponding with FTS_VENDOR_ID3
  * define your own fw_file, the sample one is invalid
  */
-#define FTS_UPGRADE_FW3_FILE                     "include/firmware/fw_sample.h"
+#define FTS_UPGRADE_FW3_FILE                     "include/firmware/fw_sample.i"
 
 /*********************************************************/
 
