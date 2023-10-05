@@ -16,11 +16,6 @@
 #include "dsi_parser.h"
 #include "sde_dbg.h"
 
-#ifdef CONFIG_TARGET_PROJECT_K7T
-#include <linux/module.h>
-#include "exposure_adjustment.h"
-#endif
-
 /**
  * topology is currently defined by a set of following 3 values:
  * 1. num of layer mixers
@@ -40,10 +35,6 @@
 #define MIN_PREFILL_LINES      35
 
 extern void lcd_esd_enable(bool on);
-
-#ifdef CONFIG_TARGET_PROJECT_K7T
-static bool screen_on = true;
-#endif
 
 enum dsi_dsc_ratio_type {
 	DSC_8BPC_8BPP,
@@ -763,7 +754,6 @@ error:
 	return rc;
 }
 
-#ifdef CONFIG_TARGET_PROJECT_K7T
 int dsi_panel_update_doze(struct dsi_panel *panel) {
 	int rc = 0;
 
@@ -807,23 +797,14 @@ int dsi_panel_set_doze_mode(struct dsi_panel *panel, enum dsi_doze_mode_type mod
 
 	return dsi_panel_update_doze(panel);
 }
-#endif
 
 int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 {
 	int rc = 0;
-#ifdef CONFIG_TARGET_PROJECT_K7T
-	int bl_dc_min = panel->bl_config.bl_min_level * 2;
-#endif
 	struct dsi_backlight_config *bl = &panel->bl_config;
 
 	if (panel->host_config.ext_bridge_mode)
 		return 0;
-
-#ifdef CONFIG_TARGET_PROJECT_K7T
-        if (bl_lvl > 0)
-                bl_lvl = ea_panel_calc_backlight(bl_lvl < bl_dc_min ? bl_dc_min : bl_lvl);
-#endif
 
 	DSI_DEBUG("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
 	switch (bl->type) {
@@ -1913,7 +1894,6 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-post-mode-switch-on-command",
 	"qcom,mdss-dsi-qsync-on-commands",
 	"qcom,mdss-dsi-qsync-off-commands",
-#ifdef CONFIG_TARGET_PROJECT_K7T
 	"qcom,mdss-dsi-doze-hbm-command",
 	"qcom,mdss-dsi-doze-lbm-command",
 	"qcom,mdss-dsi-dispparam-hbm-on-command",
@@ -1922,7 +1902,6 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-hbm2-on-command",
 	"qcom,mdss-dsi-dispparam-bc-90hz-command",
 	"qcom,mdss-dsi-dispparam-bc-60hz-command",
-#endif
 };
 
 const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
@@ -1949,7 +1928,6 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-post-mode-switch-on-command-state",
 	"qcom,mdss-dsi-qsync-on-commands-state",
 	"qcom,mdss-dsi-qsync-off-commands-state",
-#ifdef CONFIG_TARGET_PROJECT_K7T
 	"qcom,mdss-dsi-doze-hbm-command-state",
 	"qcom,mdss-dsi-doze-lbm-command-state",
 	"qcom,mdss-dsi-dispparam-hbm-on-command-state",
@@ -1958,7 +1936,6 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-hbm2-on-command-state",
 	"qcom,mdss-dsi-dispparam-bc-90hz-command-state",
 	"qcom,mdss-dsi-dispparam-bc-60hz-command-state",
-#endif
 };
 
 static int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
@@ -3595,10 +3572,8 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	if (rc)
 		DSI_DEBUG("failed to parse esd config, rc=%d\n", rc);
 
-#ifdef CONFIG_TARGET_PROJECT_K7T
 	panel->doze_mode = DSI_DOZE_LPM;
 	panel->doze_enabled = false;
-#endif
 
 	panel->power_mode = SDE_MODE_DPMS_OFF;
 	drm_panel_init(&panel->drm_panel);
@@ -3626,53 +3601,6 @@ void dsi_panel_put(struct dsi_panel *panel)
 
 	kfree(panel);
 }
-
-#ifdef CONFIG_TARGET_PROJECT_K7T
-static struct dsi_panel * set_panel;
-static ssize_t mdss_fb_set_ea_enable(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t len)
-{
-	u32 ea_enable;
-
-	if (!screen_on)
-		goto exit;
-
-	if (sscanf(buf, "%d", &ea_enable) != 1) {
-		DSI_ERR("sccanf buf error!\n");
-		goto exit;
-	}
-
-	ea_panel_mode_ctrl(set_panel, ea_enable != 0);
-
-	goto exit;
-
-exit:
-	return len;
-}
-
-static ssize_t mdss_fb_get_ea_enable(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	int ret;
-	bool ea_enable = ea_panel_is_enabled();
-
-	ret = scnprintf(buf, PAGE_SIZE, "%d\n", ea_enable ? 1 : 0);
-
-	return ret;
-}
-
-static DEVICE_ATTR(msm_fb_ea_enable, S_IRUGO | S_IWUSR,
-	mdss_fb_get_ea_enable, mdss_fb_set_ea_enable);
-
-static struct attribute *mdss_fb_attrs[] = {
-	&dev_attr_msm_fb_ea_enable.attr,
-	NULL,
-};
-
-static struct attribute_group mdss_fb_attr_group = {
-	.attrs = mdss_fb_attrs,
-};
-#endif
 
 int dsi_panel_drv_init(struct dsi_panel *panel,
 		       struct mipi_dsi_host *host)
@@ -3727,13 +3655,6 @@ int dsi_panel_drv_init(struct dsi_panel *panel,
 			       panel->name, rc);
 		goto error_gpio_release;
 	}
-
-#ifdef CONFIG_TARGET_PROJECT_K7T
-	rc = sysfs_create_group(&(panel->parent->kobj), &mdss_fb_attr_group);
-	if (rc)
-		pr_err("sysfs group creation failed, rc=%d\n", rc);
-	set_panel = panel;
-#endif
 
 	goto exit;
 
@@ -4268,11 +4189,9 @@ int dsi_panel_set_lp1(struct dsi_panel *panel)
 		DSI_ERR("[%s] failed to send DSI_CMD_SET_LP1 cmd, rc=%d\n",
 		       panel->name, rc);
 
-#ifdef CONFIG_TARGET_PROJECT_K7T
 	rc = dsi_panel_set_doze_status(panel, true);
 	if (rc)
 		DSI_ERR("unable to set doze on\n");
-#endif
 exit:
 	mutex_unlock(&panel->panel_lock);
 	return rc;
@@ -4296,11 +4215,9 @@ int dsi_panel_set_lp2(struct dsi_panel *panel)
 		DSI_ERR("[%s] failed to send DSI_CMD_SET_LP2 cmd, rc=%d\n",
 		       panel->name, rc);
 
-#ifdef CONFIG_TARGET_PROJECT_K7T
 	rc = dsi_panel_set_doze_status(panel, true);
 	if (rc)
 		DSI_ERR("unable to set doze on\n");
-#endif
 exit:
 	mutex_unlock(&panel->panel_lock);
 	return rc;
@@ -4332,11 +4249,9 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 		DSI_ERR("[%s] failed to send DSI_CMD_SET_NOLP cmd, rc=%d\n",
 		       panel->name, rc);
 
-#ifdef CONFIG_TARGET_PROJECT_K7T
 	rc = dsi_panel_set_doze_status(panel, false);
 	if (rc)
 		DSI_ERR("unable to set doze off\n");
-#endif
 exit:
 	mutex_unlock(&panel->panel_lock);
 	return rc;
@@ -4772,9 +4687,7 @@ int dsi_panel_disable(struct dsi_panel *panel)
 	}
 	panel->panel_initialized = false;
 	panel->power_mode = SDE_MODE_DPMS_OFF;
-#ifdef CONFIG_TARGET_PROJECT_K7T
 	panel->doze_enabled = false;
-#endif
 
 	mutex_unlock(&panel->panel_lock);
 	return rc;
@@ -4874,7 +4787,7 @@ int dsi_panel_apply_hbm_mode(struct dsi_panel *panel)
 {
 	static const enum dsi_cmd_set_type type_map[] = {
 		DSI_CMD_SET_DISP_HBM_OFF,
-		DSI_CMD_SET_HBM2_ON
+		DSI_CMD_SET_DISP_HBM_ON
 	};
 
 	enum dsi_cmd_set_type type;
@@ -4892,61 +4805,3 @@ int dsi_panel_apply_hbm_mode(struct dsi_panel *panel)
 
 	return rc;
 }
-
-#ifdef CONFIG_TARGET_PROJECT_K7T
-static int dsi_panel_dc_dim_notifier_callback(struct notifier_block *self, unsigned long event, void *data)
-{
-	struct drm_notify_data *evdata = data;
-	unsigned int blank;
-
-	if (event != DRM_EVENT_BLANK)
-		return 0;
-
-	if (evdata && evdata->data) {
-		blank = *(int *)(evdata->data);
-		switch (blank) {
-		case DRM_BLANK_POWERDOWN:
-			if (!screen_on)
-				break;
-			screen_on = false;
-			break;
-		case DRM_BLANK_UNBLANK:
-			if (screen_on)
-				break;
-			screen_on = true;
-			break;
-		default:
-			break;
-		}
-	}
-
-	return NOTIFY_OK;
-}
-
-static struct notifier_block dsi_panel_dc_dim_notifier = {
-	.notifier_call = dsi_panel_dc_dim_notifier_callback,
-};
-
-static int __init dsi_panel_dc_dim_init(void)
-{
-
-	int ret = 0;
-
-	// Register the driver module as a client of the DRM PANEL event notifier
-	ret = drm_register_client(&dsi_panel_dc_dim_notifier);
-
-	if (ret)
-		DSI_ERR("Failed to register notifier, err: %d\n", ret);
-
-	return ret;
-}
-
-static void __exit dsi_panel_dc_dim_exit(void)
-{
-	// Unregister the driver module as a client of the DRM PANEL event notifier
-	drm_unregister_client(&dsi_panel_dc_dim_notifier);
-}
-
-module_init(dsi_panel_dc_dim_init);
-module_exit(dsi_panel_dc_dim_exit);
-#endif
