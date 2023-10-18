@@ -42,6 +42,7 @@ static const char * const reset_reasons[RS_REASON_MAX] = {
 };
 
 static struct kobject *bootinfo_kobj;
+static struct kobject *kernelchk_kobj;
 static powerup_reason_t powerup_reason;
 
 #define bootinfo_attr(_name) \
@@ -164,6 +165,8 @@ static int __init bootinfo_init(void)
 		pr_err("bootinfo_init: subsystem_register failed\n");
 		goto fail;
 	}
+
+	kernelchk_kobj = kobject_create_and_add("kernelchk", NULL);
 
 	ret = sysfs_create_group(bootinfo_kobj, &attr_group);
 	if (ret) {
